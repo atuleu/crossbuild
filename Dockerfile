@@ -1,10 +1,8 @@
-FROM buildpack-deps:jessie-curl
+FROM buildpack-deps:buster-curl
 MAINTAINER Manfred Touron <m@42.am> (https://github.com/moul)
 
 # Install deps
-RUN set -x; \
-    echo deb http://emdebian.org/tools/debian/ jessie main > /etc/apt/sources.list.d/emdebian.list \
- && curl -sL http://emdebian.org/tools/debian/emdebian-toolchain-archive.key | apt-key add - \
+RUN set -x \
  && dpkg --add-architecture arm64                      \
  && dpkg --add-architecture armel                      \
  && dpkg --add-architecture armhf                      \
@@ -38,7 +36,6 @@ RUN set -x; \
         mercurial                                      \
         multistrap                                     \
         patch                                          \
-        python-software-properties                     \
         software-properties-common                     \
         subversion                                     \
         wget                                           \
@@ -98,15 +95,16 @@ ENV LINUX_TRIPLES=arm-linux-gnueabi,arm-linux-gnueabihf,aarch64-linux-gnu,mipsel
 COPY ./assets/osxcross-wrapper /usr/bin/osxcross-wrapper
 RUN for triple in $(echo ${LINUX_TRIPLES} | tr "," " "); do                                       \
       for bin in /etc/alternatives/$triple-* /usr/bin/$triple-*; do                               \
-        if [ ! -f /usr/$triple/bin/$(basename $bin | sed "s/$triple-//") ]; then                  \
-          ln -s $bin /usr/$triple/bin/$(basename $bin | sed "s/$triple-//");                      \
+        if [ ! -f "/usr/$triple/bin/$(basename $bin | sed "s/$triple-//")" ]; then                \
+          ln -s $bin "/usr/$triple/bin/$(basename $bin | sed "s/$triple-//")";                    \
         fi;                                                                                       \
       done;                                                                                       \
     done &&                                                                                       \
+    mkdir /usr/x86_64-linux-gnu &&                                                                \
     for triple in $(echo ${DARWIN_TRIPLES} | tr "," " "); do                                      \
       mkdir -p /usr/$triple/bin;                                                                  \
       for bin in /usr/osxcross/bin/$triple-*; do                                                  \
-        ln /usr/bin/osxcross-wrapper /usr/$triple/bin/$(basename $bin | sed "s/$triple-//");      \
+        ln /usr/bin/osxcross-wrapper "/usr/$triple/bin/$(basename $bin | sed "s/$triple-//")";    \
       done &&                                                                                     \
       rm -f /usr/$triple/bin/clang*;                                                              \
       ln -s cc /usr/$triple/bin/gcc;                                                              \
@@ -115,8 +113,8 @@ RUN for triple in $(echo ${LINUX_TRIPLES} | tr "," " "); do                     
     for triple in $(echo ${WINDOWS_TRIPLES} | tr "," " "); do                                     \
       mkdir -p /usr/$triple/bin;                                                                  \
       for bin in /etc/alternatives/$triple-* /usr/bin/$triple-*; do                               \
-        if [ ! -f /usr/$triple/bin/$(basename $bin | sed "s/$triple-//") ]; then                  \
-          ln -s $bin /usr/$triple/bin/$(basename $bin | sed "s/$triple-//");                      \
+        if [ ! -f "/usr/$triple/bin/$(basename $bin | sed "s/$triple-//")" ]; then                \
+          ln -s $bin "/usr/$triple/bin/$(basename $bin | sed "s/$triple-//")";                    \
         fi;                                                                                       \
       done;                                                                                       \
       ln -s gcc /usr/$triple/bin/cc;                                                              \
